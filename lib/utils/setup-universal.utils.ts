@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { ngExpressEngine } from '@nguniversal/express-engine';
 import * as express from 'express';
 import { CacheKeyByOriginalUrlGenerator } from '../cache/cache-key-by-original-url.generator';
@@ -9,14 +10,18 @@ const DEFAULT_CACHE_EXPIRATION_TIME = 60000; // 60 seconds
 export function setupUniversal(app: any, ngOptions: AngularUniversalOptions) {
   const cacheOptions = getCacheOptions(ngOptions);
 
-  app.engine('html', (_, options, callback) => {
+  app.engine('html', async (_, options, callback) => {
     let cacheKey;
     if (cacheOptions.isEnabled) {
       const cacheKeyGenerator = cacheOptions.keyGenerator;
       cacheKey = cacheKeyGenerator.generateCacheKey(options.req);
-      const cacheHtml = cacheOptions.storage.get(cacheKey);
-      if (cacheHtml) {
-        return callback(null, cacheHtml);
+      try {
+        const cacheHtml = await cacheOptions.storage.get(cacheKey);
+        if (cacheHtml) {
+          return callback(null, cacheHtml);
+        }
+      } catch (e) {
+        Logger.error(`Error on fetch cache ${cacheKey}: ${e.message}`, e.trace, e.context);
       }
     }
 

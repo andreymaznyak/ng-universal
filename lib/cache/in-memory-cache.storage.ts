@@ -6,7 +6,7 @@ export class InMemoryCacheStorage implements CacheStorage {
     cache.put(key, value, expiresIn);
   }
 
-  get(key: string): string {
+  async get(key: string): Promise<string> {
     return cache.get(key);
   }
 }
